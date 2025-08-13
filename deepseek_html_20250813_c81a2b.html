@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Recette Poulet du Jour</title>
+  <meta name="description" content="Générateur quotidien de recettes à base de poulet, installable comme PWA." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext x='50' y='60' font-size='60' text-anchor='middle'%3E%F0%9F%90%94%3C/text%3E%3C/svg%3E" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    .glass { backdrop-filter: blur(8px); background: rgba(255,255,255,.7); }
+    .shadow-soft { box-shadow: 0 10px 25px rgba(0,0,0,.08); }
+    img { object-fit: cover; }
+    .badge { background: rgba(255,255,255,.2); }
+    .pulse { animation: pulse 1.5s infinite; }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.03); }
+      100% { transform: scale(1); }
+    }
+    .fade-in { animation: fadeIn 0.5s ease-in; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-gradient-to-b from-amber-50 via-orange-50 to-rose-50 text-gray-800">
+  <div class="max-w-xl mx-auto p-4 pb-24">
+    <header class="flex items-center justify-between gap-3 sticky top-0 z-10 bg-gradient-to-b from-amber-50/80 to-transparent backdrop-blur p-2">
+      <h1 class="text-2xl font-extrabold tracking-tight flex items-center gap-2">
+        <i class="fas fa-drumstick-bite text-amber-600"></i>
+        <span>Recette de poulet du jour</span>
+      </h1>
+      <div class="flex gap-2">
+        <button id="btnShare" class="px-3 py-2 rounded-2xl bg-black text-white text-sm shadow-soft flex items-center gap-2">
+          <i class="fas fa-share-alt"></i>
+          <span>Partager</span>
+        </button>
+        <button id="btnNew" class="px-3 py-2 rounded-2xl bg-white text-sm shadow-soft border flex items-center gap-2">
+          <i class="fas fa-sync-alt"></i>
+          <span>Nouvelle</span>
+        </button>
+      </div>
+    </header>
+
+    <main id="card" class="mt-3 rounded-3xl overflow-hidden shadow-soft border glass fade-in pulse">
+      <div class="relative h-56 w-full bg-gradient-to-r from-amber-200 to-orange-300">
+        <img id="photo" alt="Photo du plat" class="w-full h-full" loading="lazy" />
+        <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+        <div class="absolute bottom-3 left-3 right-3 text-white">
+          <p id="badge" class="badge inline-block text-xs uppercase tracking-widest px-3 py-1 rounded-full backdrop-blur">Poulet • Quotidien</p>
+          <h2 id="title" class="mt-2 text-xl font-bold leading-tight"></h2>
+        </div>
+      </div>
+
+      <div class="p-4">
+        <section class="mb-4">
+          <div class="grid grid-cols-3 gap-2 text-center text-sm">
+            <div class="bg-white rounded-2xl p-3 shadow-soft flex flex-col items-center">
+              <i class="fas fa-clock text-amber-500 mb-1"></i>
+              <div class="text-xs text-gray-500">Préparation</div>
+              <div id="prep" class="font-semibold">—</div>
+            </div>
+            <div class="bg-white rounded-2xl p-3 shadow-soft flex flex-col items-center">
+              <i class="fas fa-fire text-orange-500 mb-1"></i>
+              <div class="text-xs text-gray-500">Cuisson</div>
+              <div id="cook" class="font-semibold">—</div>
+            </div>
+            <div class="bg-white rounded-2xl p-3 shadow-soft flex flex-col items-center">
+              <i class="fas fa-utensils text-rose-500 mb-1"></i>
+              <div class="text-xs text-gray-500">Portions</div>
+              <div id="serves" class="font-semibold">—</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="mb-6">
+          <h3 class="font-bold text-lg mb-2 flex items-center gap-2 text-amber-700">
+            <i class="fas fa-carrot"></i>
+            <span>Ingrédients</span>
+          </h3>
+          <ul id="ingredients" class="list-disc pl-6 space-y-1"></ul>
+        </section>
+
+        <section class="mb-6">
+          <h3 class="font-bold text-lg mb-2 flex items-center gap-2 text-orange-700">
+            <i class="fas fa-list-ol"></i>
+            <span>Étapes</span>
+          </h3>
+          <ol id="steps" class="list-decimal pl-6 space-y-2"></ol>
+        </section>
+
+        <section class="mb-6">
+          <h3 class="font-bold text-lg mb-2 flex items-center gap-2 text-rose-700">
+            <i class="fas fa-lightbulb"></i>
+            <span>Conseil du Chef</span>
+          </h3>
+          <p id="tip" class="text-sm text-gray-700 bg-amber-50 rounded-xl p-3"></p>
+        </section>
+
+        <section class="mb-2 text-center">
+          <button id="btnCopy" class="px-4 py-3 rounded-2xl w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold shadow-soft flex items-center justify-center gap-2">
+            <i class="far fa-copy"></i>
+            <span>Copier la recette</span>
+          </button>
+          <p class="text-xs text-gray-500 mt-2 flex items-center justify-center gap-1">
+            <i class="fas fa-mobile-alt"></i>
+            <span>Astuce : ajoute cette page à ton écran d'accueil pour l'avoir comme application.</span>
+          </p>
+        </section>
+      </div>
+    </main>
+
+    <footer class="text-center text-xs text-gray-500 mt-6">
+      <p>&copy; <span id="year"></span> Générateur de recettes de poulet — PWA</p>
+    </footer>
+  </div>
+
+  <script>
+    // ===== Outils =====
+    const todayKey = () => new Date().toISOString().slice(0,10); // AAAA-MM-JJ
+    function mulberry32(a) {
+      return function() {
+        let t = a += 0x6D2B79F5;
+        t = Math.imul(t ^ t >>> 15, t | 1);
+        t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+      }
+    }
+    function seedFromString(str) {
+      let h = 1779033703 ^ str.length;
+      for(let i = 0; i < str.length; i++) {
+        h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+        h = h << 13 | h >>> 19;
+      }
+      return h >>> 0;
+    }
+    function pick(rand, arr) {
+      return arr[Math.floor(rand() * arr.length)];
+    }
+
+    // ===== Données recettes =====
+    const cuts = [
+      'cuisses', 'ailes', 'poitrines', 'pilons', 'haut de cuisse', 'entier', 'suprêmes', 'filets', 'foie', 'gésiers'
+    ];
+    const methods = [
+      'grillé', 'braisé', 'rôti', 'sauté', 'au four', 'frit croustillant', 'en brochettes', 'à la plancha', 'confît', 'en papillote'
+    ];
+    const cuisines = [
+      'sénégalaise', 'marocaine', 'ivoirienne', 'nigériane', 'française', 'italienne', 'asiatique', 'libanaise', 'mexicaine', 'créole'
+    ];
+    const seasonings = [
+      'citron-ail', 'gingembre-piment', 'yaourt-épices', 'moutarde-thym', 'misô-sésame', 'herbes de Provence', 'paprika fumé', 'curry coco', 'tamarin-coriandre', 'sucré-salé miel-soja'
+    ];
+    const sides = [
+      'riz parfumé', 'attieke', 'alloco', 'couscous', 'patates douces rôties', 'légumes sautés', 'salade croquante', 'frites de manioc', 'ndambé', 'purée légère'
+    ];
+    const sauces = [
+      'yassa', 'sauce arachide', 'sauce tomate épicée', 'velouté au citron', 'crémeuse à l\'ail', 'piri-piri', 'chimichurri', 'sauce gingembre', 'beurre citronné', 'sauce verte herbacée'
+    ];
+    const tips = [
+      'Sale la viande 30 minutes avant pour une chair juteuse.',
+      'Laisse reposer le poulet 5 minutes après cuisson pour fixer les jus.',
+      'Marinade express : 2 cs d\'huile + 1 cs de citron + sel + poivre + épices.',
+      'Pour une peau croustillante, sèche bien le poulet avant cuisson.',
+      'Ajoute une pointe de sucre pour équilibrer l\'acidité des sauces.',
+      'Grille au-dessus d\'une barquette d\'eau pour garder l\'humidité.',
+      'Déglace la poêle avec un peu de bouillon pour une sauce minute.',
+      'Utilise un thermomètre : 75°C au cœur pour une cuisson parfaite.'
+    ];
+
+    // ===== Génération d'une recette (déterministe par jour) =====
+    function generateRecipe(seedStr) {
+      const rand = mulberry32(seedFromString(seedStr));
+      const cut = pick(rand, cuts);
+      const method = pick(rand, methods);
+      const cuisine = pick(rand, cuisines);
+      const seasoning = pick(rand, seasonings);
+      const side = pick(rand, sides);
+      const sauce = pick(rand, sauces);
+      const serves = 2 + Math.floor(rand() * 3); // 2-4
+      const prep = 10 + Math.floor(rand() * 25); // 10-34 min
+      const cook = 15 + Math.floor(rand() * 35); // 15-49 min
+
+      const title = `Poulet ${cut} ${method} style ${cuisine} (${seasoning})`;
+      const ingredients = [
+        `800 g de poulet (${cut})`,
+        `2 cs d'huile végétale`,
+        `1 oignon émincé`,
+        `2 gousses d'ail hachées`,
+        `1 cs d'épices : ${seasoning}`,
+        `Sel et poivre`,
+        `Jus d'un demi citron`,
+        `Herbes fraîches (optionnel)`
+      ];
+      const steps = [
+        `Mélange l'huile, le citron, le sel/poivre et les épices (${seasoning}). Marine le poulet 20–30 min.`,
+        `Saisis le poulet ${method.includes('grill') || method.includes('plancha') ? 'sur feu vif' : 'dans une poêle chaude'} jusqu'à coloration.`,
+        `Ajoute l'oignon et l'ail, fais revenir 2–3 min.`,
+        `Poursuis la cuisson ${method} jusqu'à cuisson à cœur (75°C).`,
+        `Nappe de ${sauce} et accompagne de ${side}.` 
+      ];
+      const tip = pick(rand, tips);
+
+      // Photo via Unsplash Source (pas de clé requise)
+      const photoUrl = `https://source.unsplash.com/featured/800x600/?chicken,${encodeURIComponent(method)},${encodeURIComponent(cuisine)}`;
+
+      return { title, ingredients, steps, tip, serves, prep, cook, photoUrl };
+    }
+
+    // ===== Rendu =====
+    function render(recipe) {
+      document.getElementById('title').textContent = recipe.title;
+      document.getElementById('prep').textContent = recipe.prep + ' min';
+      document.getElementById('cook').textContent = recipe.cook + ' min';
+      document.getElementById('serves').textContent = recipe.serves;
+      document.getElementById('photo').src = recipe.photoUrl;
+
+      const ul = document.getElementById('ingredients');
+      ul.innerHTML = '';
+      recipe.ingredients.forEach(x => {
+        const li = document.createElement('li');
+        li.textContent = x;
+        ul.appendChild(li);
+      });
+
+      const ol = document.getElementById('steps');
+      ol.innerHTML = '';
+      recipe.steps.forEach(x => {
+        const li = document.createElement('li');
+        li.textContent = x;
+        ol.appendChild(li);
+      });
+
+      document.getElementById('tip').textContent = recipe.tip;
+      
+      // Ajout d'une animation à la carte
+      const card = document.getElementById('card');
+      card.classList.remove('fade-in', 'pulse');
+      void card.offsetWidth; // Trigger reflow
+      card.classList.add('fade-in', 'pulse');
+    }
+
+    function getDailyRecipe() {
+      const key = todayKey();
+      const cached = localStorage.getItem('daily-recipe');
+      const cachedKey = localStorage.getItem('daily-key');
+      if (cached && cachedKey === key) {
+        try { 
+          return JSON.parse(cached); 
+        } catch(e) {
+          console.error('Erreur de parsing des données locales', e);
+        }
+      }
+      const recipe = generateRecipe(key);
+      localStorage.setItem('daily-recipe', JSON.stringify(recipe));
+      localStorage.setItem('daily-key', key);
+      return recipe;
+    }
+
+    function newRandomRecipe() {
+      const recipe = generateRecipe(String(Date.now()));
+      render(recipe);
+    }
+
+    // ===== Partage / Copie =====
+    function buildText() {
+      const t = document.getElementById('title').textContent;
+      const p = document.getElementById('prep').textContent;
+      const c = document.getElementById('cook').textContent;
+      const s = document.getElementById('serves').textContent;
+      const ings = [...document.querySelectorAll('#ingredients li')].map(li => `- ${li.textContent}`).join('\n');
+      const steps = [...document.querySelectorAll('#steps li')].map((li, i) => `${i+1}. ${li.textContent}`).join('\n');
+      const tip = document.getElementById('tip').textContent;
+      
+      return `${t}\n\nPréparation: ${p} | Cuisson: ${c} | Portions: ${s}\n\nIngrédients:\n${ings}\n\nÉtapes:\n${steps}\n\nConseil du Chef: ${tip}`;
+    }
+
+    document.getElementById('btnShare').addEventListener('click', async () => {
+      const text = buildText();
+      const title = document.getElementById('title').textContent;
+      
+      if (navigator.share) {
+        try { 
+          await navigator.share({
+            title: title,
+            text: text,
+            url: window.location.href
+          }); 
+        } catch(e) {
+          console.log('Partage annulé', e);
+        }
+      } else {
+        try {
+          await navigator.clipboard.writeText(text);
+          showNotification('Recette copiée dans le presse-papiers !');
+        } catch(e) {
+          alert('Recette copiée dans le presse-papiers.');
+        }
+      }
+    });
+
+    document.getElementById('btnCopy').addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(buildText());
+        showNotification('Recette copiée !');
+      } catch(e) {
+        alert('Recette copiée.');
+      }
+    });
+
+    document.getElementById('btnNew').addEventListener('click', newRandomRecipe);
+
+    // Notification visuelle
+    function showNotification(message) {
+      const notification = document.createElement('div');
+      notification.textContent = message;
+      notification.classList.add('fixed', 'bottom-4', 'left-1/2', 'transform', '-translate-x-1/2', 
+                               'bg-black', 'text-white', 'px-4', 'py-2', 'rounded-full', 
+                               'shadow-lg', 'z-50', 'animate-bounce');
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        notification.remove();
+      }, 2000);
+    }
+
+    // ===== Afficher la recette du jour au chargement =====
+    document.addEventListener('DOMContentLoaded', () => {
+      const daily = getDailyRecipe();
+      render(daily);
+      document.getElementById('year').textContent = new Date().getFullYear();
+    });
+
+    // ===== PWA (manifest + service worker via Blob) =====
+    const manifest = {
+      name: "Recette Poulet du Jour",
+      short_name: "Poulet Jour",
+      start_url: ".",
+      display: "standalone",
+      background_color: "#fff7ed",
+      theme_color: "#f59e0b",
+      icons: [
+        { src: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAABUUlEQVR4nO2YwQ3CMAxFZx8yW3gQmG0m6YQdG0w3mYpQzM2n7w1mA9M3W6mQh9K8m3y1C0+1nq8JcJm0qj1g8U3Jxw1s5m9xg9c9fQn7QxW9nYIY8QZ8QJ3m3m5xgk8mK5nPzP0dL0Q1p3V1qkq8h8xQjJXKc4Yw0u1cPq5f7k3i9Dqz4zq0Jqk2xJYI8o4x/9YF0h5CkHqS/QqQf5a7vHf7CqJpXq5i6y7m9p8u7mXk8b1m2mS1b3K5k1mPsg8q0nH8v1mQpM1jI5r1J/qVgQAAABh2h6QdQdT6m8GCKv3rC1r2cXc4q1k5cE0V4c7J1vA9x5i7Y7wHq6bqD1uFQ7bq5Lw/5cWvZz3fK6C7OeX+8kZCzj4g7o0Qz2y0w0AAAAA%3D", sizes: "192x192", type: "image/png" }
+      ]
+    };
+    const blobManifest = new Blob([JSON.stringify(manifest)], {type:'application/json'});
+    const manifestURL = URL.createObjectURL(blobManifest);
+    const link = document.createElement('link');
+    link.rel = 'manifest';
+    link.href = manifestURL;
+    document.head.appendChild(link);
+
+    // Enregistrement SW
+    if ('serviceWorker' in navigator) {
+      const swCode = `
+        const CACHE = 'poulet-jour-v1';
+        self.addEventListener('install', e => {
+          e.waitUntil(caches.open(CACHE).then(c => c.addAll(['./'])));
+          self.skipWaiting();
+        });
+        self.addEventListener('activate', e => { e.waitUntil(self.clients.claim()); });
+        self.addEventListener('fetch', e => {
+          const url = new URL(e.request.url);
+          // Cache-first pour même origine; network-first pour images externes
+          if (url.origin === location.origin) {
+            e.respondWith(caches.match(e.request).then(r => r || fetch(e.request).then(res => {
+              const copy = res.clone(); 
+              caches.open(CACHE).then(c => c.put(e.request, copy)); 
+              return res;
+            })));
+          } else {
+            e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+          }
+        });
+      `;
+      const swBlob = new Blob([swCode], {type:'text/javascript'});
+      const swUrl = URL.createObjectURL(swBlob);
+      navigator.serviceWorker.register(swUrl);
+    }
+  </script>
+</body>
+</html>
